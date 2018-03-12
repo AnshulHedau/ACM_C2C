@@ -11,15 +11,27 @@ public class Timeline {
     String description;
     String icon_identifier;
 
+    String duration;
+
     public Timeline() {
     }
 
-    public Timeline(String from, String to, String date, String description, String icon_identifier) {
+    public Timeline(String from, String to, String date, String description, String icon_identifier, String duration) {
         this.from = from;
         this.to = to;
         this.date = date;
         this.description = description;
         this.icon_identifier = icon_identifier;
+        this.duration = duration;
+    }
+
+
+    public String getDuration() {
+        return duration;
+    }
+
+    public void setDuration(String duration) {
+        this.duration = duration;
     }
 
     public String getFrom() {

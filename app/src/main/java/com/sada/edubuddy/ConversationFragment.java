@@ -28,6 +28,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.HashMap;
 
 import static android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE;
@@ -36,6 +40,7 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
 
     private static final String TAG = "ConversationFragment";
     private static final int API_LOADER_ID = 1;
+    private static final int ADD_TO_FIREBASE = 5;
     private LinearLayout messagesContainer;
     private EditText etMessage;
     private ImageButton bSendMessage, bRecordMMessage;
@@ -43,6 +48,14 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
     final private String BASE_URL = "https://edu-buddy.herokuapp.com/query?query=";
     private String QUERY_URL;
     private boolean loaderInitiated = false;
+    private boolean addingEvent = false;
+    final private int DESCRIPTION = 0;
+    final private int FROM = 2;
+    final private int TO = 3;
+    final private int DURATION = 4;
+    final private int DATE = 1;
+    private int currentStep = 0;
+    String description = null, from = null, to = null, duration = null, date = null;
 
     public static ConversationFragment newInstance() {
 
@@ -108,18 +121,105 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
             @Override
             public void onClick(View view) {
                 String message = etMessage.getText().toString().trim();
+                View messageView = null;
                 if (message.length() != 0) {
-                    View messageView = generateView(message, "user");
-                    etMessage.setText("");
-                    messagesContainer.addView(messageView);
-                    scrollView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            scrollView.scrollTo(0, scrollView.getBottom());
+                    if (addingEvent) {
+                        switch (currentStep) {
+                            case DESCRIPTION:
+                                description = message;
+                                currentStep++;
+                                messageView = generateView(message, "user");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                messageView = generateView("When is your event - the date?", "bot");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                scrollView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        scrollView.scrollTo(0, scrollView.getBottom());
+                                    }
+                                });
+                                break;
+                            case DATE:
+                                date = message;
+                                messageView = generateView(message, "user");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                messageView = generateView("When is your event from ?", "bot");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                scrollView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        scrollView.scrollTo(0, scrollView.getBottom());
+                                    }
+                                });
+                                currentStep++;
+                                break;
+                            case FROM:
+                                from = message;
+                                currentStep++;
+                                messageView = generateView(message, "user");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                messageView = generateView("When does your event end ?", "bot");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                scrollView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        scrollView.scrollTo(0, scrollView.getBottom());
+                                    }
+                                });
+                                break;
+                            case TO:
+                                to = message;
+                                messageView = generateView(message, "user");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                messageView = generateView("How much time do you think you would take to complete the task?", "bot");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                scrollView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        scrollView.scrollTo(0, scrollView.getBottom());
+                                    }
+                                });
+                                currentStep++;
+                                break;
+                            case DURATION:
+                                duration = message;
+                                messageView = generateView(message, "user");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                messageView = generateView("That's great, Just a minute while I set-up your event...", "bot");
+                                etMessage.setText("");
+                                messagesContainer.addView(messageView);
+                                scrollView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        scrollView.scrollTo(0, scrollView.getBottom());
+                                    }
+                                });
+                                currentStep++;
+                                addToFirebase(description, from, to, duration, date);
+                                break;
                         }
-                    });
-                    QUERY_URL = BASE_URL + message;
-                    initiateLoader();
+                    } else {
+                        messageView = generateView(message, "user");
+                        etMessage.setText("");
+                        messagesContainer.addView(messageView);
+                        scrollView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                scrollView.scrollTo(0, scrollView.getBottom());
+                            }
+                        });
+                        QUERY_URL = BASE_URL + message;
+                        initiateLoader();
+                    }
                 }
             }
         });
@@ -128,6 +228,32 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
 
 
         return rootView;
+    }
+
+    private void addToFirebase(String description, String from, String to, String duration, String date) {
+        Log.i(TAG, "addToFirebase: ADDING");
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        String userId = firebaseAuth.getCurrentUser().getUid();
+        DatabaseReference currentSchedule = FirebaseDatabase.getInstance().getReference().child("users")
+                .child(userId).child("schedule");
+        String key = currentSchedule.push().getKey();
+        currentSchedule.child(key).child("description").setValue(description);
+        currentSchedule.child(key).child("from").setValue(from);
+        currentSchedule.child(key).child("to").setValue(to);
+        currentSchedule.child(key).child("duration").setValue(duration);
+        currentSchedule.child(key).child("date").setValue(date);
+        currentSchedule.child(key).child("icon_identifier").setValue("before");
+        View messageView = generateView("Your event has been updated to you timeline!!!", "bot");
+        etMessage.setText("");
+        messagesContainer.addView(messageView);
+        scrollView.post(new Runnable() {
+            @Override
+            public void run() {
+                scrollView.scrollTo(0, scrollView.getBottom());
+            }
+        });
+        addingEvent = false;
+        currentStep = 0;
     }
 
     public View generateView(CharSequence message, String data_1) {
@@ -168,6 +294,7 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                 viewPager.setCurrentItem(0);
                 break;
             case "addEvent":
+                addingEvent = true;
                 addEvent();
                 break;
             case "getNews":
@@ -189,19 +316,24 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                 msg = "Sorry I did not understand that!!!";
                 break;
         }
-        View messageView = generateView(msg, "bot");
-        etMessage.setText("");
-        messagesContainer.addView(messageView);
-        scrollView.post(new Runnable() {
-            @Override
-            public void run() {
-                scrollView.scrollTo(0, scrollView.getBottom());
-            }
-        });
+        if (!addingEvent) {
+            View messageView = generateView(msg, "bot");
+            etMessage.setText("");
+            messagesContainer.addView(messageView);
+            scrollView.post(new Runnable() {
+                @Override
+                public void run() {
+                    scrollView.scrollTo(0, scrollView.getBottom());
+                }
+            });
+        }
 
     }
 
     private void addEvent() {
+        View messageView = generateView("Can you please help me with the event description", "bot");
+        etMessage.setText("");
+        messagesContainer.addView(messageView);
 
     }
 

@@ -5,6 +5,21 @@
     android:layout_height="150dp">
 
     <View
+        android:layout_width="300dp"
+        android:layout_height="1dp"
+        android:background="#ccc"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/line" />
+
+    <View
+        android:layout_width="160dp"
+        android:layout_height="120dp"
+        android:background="@drawable/bg_corner_gradient"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
         android:id="@+id/line"
         android:layout_width="2dp"
         android:layout_height="match_parent"
@@ -39,14 +54,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
-            android:text="hh:mm am" />
+            android:background="#01a085"
+            android:padding="5dp"
+            android:text="hh:mm am"
+            android:textColor="#fff"
+            android:textSize="16dp" />
 
         <TextView
             android:id="@+id/tvTo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:text="hh:mm am" />
+            android:background="#01a085"
+            android:padding="5dp"
+            android:text="hh:mm am"
+            android:textColor="#fff"
+            android:textSize="16dp" />
 
     </LinearLayout>
 
@@ -56,20 +79,25 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="DDth MMM YYYY"
+        android:textColor="#01a085"
+        android:textSize="18sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/fromto"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:gravity="center"
         android:id="@+id/tvDescription"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:gravity="center"
         android:padding="30dp"
         android:text="What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It "
+        android:textSize="15dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/fromto"
-        app:layout_constraintTop_toTopOf="@id/tvDate" />
+        app:layout_constraintTop_toBottomOf="@id/tvDate" />
+
 
 </android.support.constraint.ConstraintLayout>

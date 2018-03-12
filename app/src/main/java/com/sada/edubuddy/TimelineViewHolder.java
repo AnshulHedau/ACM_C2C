@@ -48,8 +48,10 @@ public class TimelineViewHolder extends RecyclerView.ViewHolder {
         tvDate.setText(description);
     }
 
-    public void setIconIdentifier (String iconIdentifierValue) {
-        if (iconIdentifierValue.equals("after")) {
+    public void setIconIdentifier(String iconIdentifierValue) {
+        if (iconIdentifierValue == null) {
+            iconIdentifier.setImageResource(R.drawable.ic_before);
+        } else if (iconIdentifierValue.equals("after")) {
             iconIdentifier.setImageResource(R.drawable.ic_after);
         } else {
             iconIdentifier.setImageResource(R.drawable.ic_before);
