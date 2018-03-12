@@ -7,3 +7,9 @@
 2. Dheeraj Nair
 3. Aditya Vikram Satnalika
 4. Anshul Hedau
+
+## The API service Github link
+https://github.com/Dheeraj1998/edu-buddy-backend
+
+## Link to the web API
+https://edu-buddy.herokuapp.com
