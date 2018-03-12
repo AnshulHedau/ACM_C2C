@@ -64,14 +64,14 @@ public class HomeActivity extends AppCompatActivity {
             Fragment fragment = null;
             switch (position) {
                 case 0:
-                    fragment = TimelineFragment.newInstance();
-                    break;
-                case 1:
                     fragment = ConversationFragment.newInstance();
                     break;
-                case 2:
-                    fragment = BuddyFragment.newInstance();
+                case 1:
+                    fragment = TimelineFragment.newInstance();
                     break;
+//                case 2:
+//                    fragment = BuddyFragment.newInstance();
+//                    break;
             }
 
             return fragment;
@@ -80,7 +80,7 @@ public class HomeActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             // Show 3 total pages.
-            return 3;
+            return 2;
         }
     }
 }

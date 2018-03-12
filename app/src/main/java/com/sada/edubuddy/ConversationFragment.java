@@ -2,9 +2,14 @@ package com.sada.edubuddy;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -32,11 +37,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 
 import static android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE;
 
-public class ConversationFragment extends Fragment implements LoaderManager.LoaderCallbacks<HashMap<String, String>> {
+public class ConversationFragment extends Fragment implements LoaderManager.LoaderCallbacks<HashMap<String, String>>, TextToSpeech.OnInitListener {
 
     private static final String TAG = "ConversationFragment";
     private static final int API_LOADER_ID = 1;
@@ -56,6 +63,12 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
     final private int DATE = 1;
     private int currentStep = 0;
     String description = null, from = null, to = null, duration = null, date = null;
+    private TextToSpeech myTTS;
+    private int MY_DATA_CHECK_CODE = 0;
+    private final int REQ_CODE_SPEECH_INPUT = 100;
+    private SpeechRecognizer speechRecognizer;
+    private Intent speechRecognizerIntent;
+    private boolean firstTime = true;
 
     public static ConversationFragment newInstance() {
 
@@ -117,6 +130,80 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
         bRecordMMessage = (ImageButton) rootView.findViewById(R.id.bRecordMessage);
         bSendMessage = (ImageButton) rootView.findViewById(R.id.bSendMessage);
         scrollView = (ScrollView) rootView.findViewById(R.id.scrollView);
+
+        //check for TTS data
+        Intent checkTTSIntent = new Intent();
+        checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
+        speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        if (speechRecognizerIntent != null) {
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override
+                public void onReadyForSpeech(Bundle bundle) {
+
+                }
+
+                @Override
+                public void onBeginningOfSpeech() {
+
+                }
+
+                @Override
+                public void onRmsChanged(float v) {
+
+                }
+
+                @Override
+                public void onBufferReceived(byte[] bytes) {
+
+                }
+
+                @Override
+                public void onEndOfSpeech() {
+
+                }
+
+                @Override
+                public void onError(int i) {
+
+                }
+
+                @Override
+                public void onResults(Bundle results) {
+                    ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    etMessage.setText(matches.get(0));
+                    if (speechRecognizer != null) {
+                        speechRecognizer.stopListening();
+                    }
+                }
+
+                @Override
+                public void onPartialResults(Bundle bundle) {
+
+                }
+
+                @Override
+                public void onEvent(int i, Bundle bundle) {
+
+                }
+            });
+        } else {
+            Log.i(TAG, "onCreateView: NULL");
+        }
+
+        bRecordMMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i(TAG, "onClick: RECORDING STARTED");
+                speechRecognizer.startListening(speechRecognizerIntent);
+            }
+        });
         bSendMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -131,9 +218,12 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                                 messageView = generateView(message, "user");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
-                                messageView = generateView("When is your event - the date?", "bot");
+//                                speakMessage(message);
+                                message = "When is your event - the date?";
+                                messageView = generateView(message, "bot");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
+                                speakMessage(message);
                                 scrollView.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -146,9 +236,12 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                                 messageView = generateView(message, "user");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
-                                messageView = generateView("When is your event from ?", "bot");
+//                                speakMessage(message);
+                                message = "When is your event from ?";
+                                messageView = generateView(message, "bot");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
+                                speakMessage(message);
                                 scrollView.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -163,9 +256,12 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                                 messageView = generateView(message, "user");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
-                                messageView = generateView("When does your event end ?", "bot");
+//                                speakMessage(message);
+                                message = "When does your event end ?";
+                                messageView = generateView(message, "bot");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
+                                speakMessage(message);
                                 scrollView.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -178,9 +274,12 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                                 messageView = generateView(message, "user");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
-                                messageView = generateView("How much time do you think you would take to complete the task?", "bot");
+//                                speakMessage(message);
+                                message = "How much time do you think you would take to complete the task?";
+                                messageView = generateView(message, "bot");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
+                                speakMessage(message);
                                 scrollView.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -194,9 +293,12 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                                 messageView = generateView(message, "user");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
-                                messageView = generateView("That's great, Just a minute while I set-up your event...", "bot");
+//                                speakMessage(message);
+                                message = "That's great, Just a minute while I set-up your event...";
+                                messageView = generateView(message, "bot");
                                 etMessage.setText("");
                                 messagesContainer.addView(messageView);
+                                speakMessage(message);
                                 scrollView.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -211,6 +313,7 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
                         messageView = generateView(message, "user");
                         etMessage.setText("");
                         messagesContainer.addView(messageView);
+//                        speakMessage(message);
                         scrollView.post(new Runnable() {
                             @Override
                             public void run() {
@@ -225,7 +328,21 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
         });
 
         ConstraintLayout layout = new ConstraintLayout(getActivity());
+        if (firstTime) {
 
+            String message = "Hi I'm EduBuddy, Your personal assistant to make your daily workload easier and your schedule more organised";
+            View messageView = generateView(message, "bot");
+            messagesContainer.addView(messageView);
+//            speakMessage(message);
+            scrollView.post(new Runnable() {
+                @Override
+                public void run() {
+                    scrollView.scrollTo(0, scrollView.getBottom());
+                }
+            });
+
+            firstTime = false;
+        }
 
         return rootView;
     }
@@ -243,9 +360,11 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
         currentSchedule.child(key).child("duration").setValue(duration);
         currentSchedule.child(key).child("date").setValue(date);
         currentSchedule.child(key).child("icon_identifier").setValue("before");
-        View messageView = generateView("Your event has been updated to you timeline!!!", "bot");
+        String message = "Your event has been updated to you timeline!!!";
+        View messageView = generateView(message, "bot");
         etMessage.setText("");
         messagesContainer.addView(messageView);
+        speakMessage(message);
         scrollView.post(new Runnable() {
             @Override
             public void run() {
@@ -291,7 +410,7 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
             case "showTimeline":
                 msg = "Taking you to your Timeline";
                 ViewPager viewPager = getActivity().findViewById(R.id.container);
-                viewPager.setCurrentItem(0);
+                viewPager.setCurrentItem(1);
                 break;
             case "addEvent":
                 addingEvent = true;
@@ -320,6 +439,7 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
             View messageView = generateView(msg, "bot");
             etMessage.setText("");
             messagesContainer.addView(messageView);
+            speakMessage(msg.toString());
             scrollView.post(new Runnable() {
                 @Override
                 public void run() {
@@ -331,15 +451,51 @@ public class ConversationFragment extends Fragment implements LoaderManager.Load
     }
 
     private void addEvent() {
-        View messageView = generateView("Can you please help me with the event description", "bot");
+        String message = "Can you please help me with the event description";
+        View messageView = generateView(message, "bot");
         etMessage.setText("");
         messagesContainer.addView(messageView);
-
+        speakMessage(message);
     }
 
 
     @Override
     public void onLoaderReset(Loader<HashMap<String, String>> loader) {
 
+    }
+
+    //speak the user text
+    private void speakMessage(String speech) {
+
+        //speak straight away
+        myTTS.speak(speech, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    //act on result of TTS data check
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == MY_DATA_CHECK_CODE) {
+            if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                //the user has the necessary data - create the TTS
+                myTTS = new TextToSpeech(getActivity(), this);
+            } else {
+                //no data - install it now
+                Intent installTTSIntent = new Intent();
+                installTTSIntent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                startActivity(installTTSIntent);
+            }
+        }
+    }
+
+    //setup TTS
+    public void onInit(int initStatus) {
+
+        //check for successful instantiation
+        if (initStatus == TextToSpeech.SUCCESS) {
+            if (myTTS.isLanguageAvailable(Locale.US) == TextToSpeech.LANG_AVAILABLE)
+                myTTS.setLanguage(Locale.US);
+        } else if (initStatus == TextToSpeech.ERROR) {
+            Toast.makeText(getActivity(), "Sorry! Text To Speech failed...", Toast.LENGTH_LONG).show();
+        }
     }
 }
